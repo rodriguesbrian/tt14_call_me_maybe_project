@@ -26,6 +26,27 @@ The analysis is structured around three operational questions:
 
 ---
 
+## Dataset
+ 
+| File | Description | Rows |
+|---|---|---|
+| `telecom_dataset_new.csv` | Daily aggregated call logs by operator | 53,902 (raw) |
+| `telecom_clients.csv` | Client company metadata (tariff plan, contract start) | 732 |
+ 
+Each row in the telecom dataset represents a **daily aggregate** of calls sharing the same combination of `(user_id, date, direction, internal, operator_id, is_missed_call)` — not an individual call record.
+ 
+**Key columns:**
+ 
+- `user_id` — client company ID
+- `operator_id` — operator ID (null for unattributed calls)
+- `direction` — `in` (inbound) or `out` (outbound)
+- `is_missed_call` — whether calls in the aggregate were missed
+- `calls_count` — number of calls in the aggregate
+- `call_duration` — total active call time (seconds)
+- `total_call_duration` — total call time including waiting (seconds)
+
+---
+
 ## Key Findings
 
 ### Analysis 1 — Missed Call Rate
@@ -75,41 +96,62 @@ At the company level, several client organizations concentrated multiple flagged
 
 This shifts the focus from individual correction toward organizational intervention.
 
+
+### Results Summary
+
+| KPI | Operators evaluated | Operators flagged |
+|---|---|---|
+| Missed Call Rate | 55 | 4 |
+| Waiting Time | 65 | 16 |
+| Outbound Productivity | 248 | 28 |
+| **Total (unique)** | **313** | **48 (~15.3%)** |
+
+Four client companies concentrated multiple flagged operators,
+suggesting structural management issues rather than isolated
+individual underperformance.
+
 ---
 
-## Technical Stack
+## Limitations
+ 
+- Analysis covers a 4-month window (August–November 2019); seasonal effects cannot be ruled out
+- 41.8% of inbound companies and 35.6% of outbound companies have a single operator — excluded from evaluation due to absence of a valid reference group
+- Companies with very small teams (2 operators) produce less statistically robust comparisons
+- `operator_id` null rows (34.2% of all missed calls) are excluded from operator-level analysis, meaning company-level missed rate is underestimated in this framework
+- Tariff plan and contract tenure were tested as segmentation variables; no statistically significant effect on KPIs was found
+---
 
-| Tool        | Purpose                               |
-| ----------- | ------------------------------------- |
-| Python      | Complete analytical workflow          |
-| Pandas      | Data cleaning and feature engineering |
-| NumPy       | Numerical computation                 |
-| SciPy       | Statistical hypothesis testing        |
-| Statsmodels | Two-Proportion Z-Test                 |
-| Matplotlib  | Data visualization                    |
-| Seaborn     | Exploratory analysis                  |
+## Tech Stack
+ 
+| Tool | Use |
+|---|---|
+| Python | Data analysis |
+| Pandas | Data manipulation |
+| NumPy | Numerical computation |
+| SciPy | Statistical tests (Mann-Whitney U) |
+| Statsmodels | Z-test for proportions |
+| Matplotlib / Seaborn | Visualisation |
+| Tableau | Executive dashboard |
 
 ---
 
-## Project Structure
-
-```text
-telecom-call-center-analysis/
-
-├── data/
-│   ├── telecom_dataset.csv
-│   └── clients_dataset.csv
-│
-├── notebooks/
-│   └── analysis.ipynb
-│
-├── outputs/
-│   ├── figures/
-│   └── flagged_operators.csv
-│
-└── README.md
+## Repository Structure
+ 
 ```
-
+TT14_CALL_ME_MAYBE_PROJECT/
+├── data/
+│   ├── raw/
+│   │   ├── telecom_dataset_new.csv
+│   │   └── telecom_clients.csv
+│   └── processed/
+├── notebook/
+│   └── analysis.ipynb
+├── reports/
+├── .gitignore
+├── README.md
+└── requirements.txt
+```
+ 
 ---
 
 ## Methodological Decisions
@@ -136,7 +178,7 @@ The minimum threshold combines:
 
 ### Inbound dominance
 
-Only operators with at least **66% inbound calls** are evaluated in the missed-call analysis.
+Only operators with at least 66% inbound calls are evaluated in the missed-call rate and waiting time analyses.
 
 This prevents outbound-focused operators from being incorrectly classified.
 
@@ -161,27 +203,6 @@ Descriptive KPIs alone are insufficient to classify operator inefficiency.
 
 ---
 
-## Dataset
-
-**Domain:** Telecom / Call Center Operations
-
-**Main tables**
-
-* Telecom interactions
-* Client information
-
-**Variables analysed**
-
-* Inbound and outbound calls
-* Missed calls
-* Waiting time
-* Operator ID
-* Client company
-* Call direction
-* Call volume
-
----
-
 ## Business Impact
 
 This methodology enables managers to:
@@ -195,12 +216,15 @@ The framework is designed to be scalable and can be applied to any call center w
 
 ---
 
+## Dashboard
+
+🔗 [Call Me Maybe — Operator Efficiency Analysis](https://public.tableau.com/app/profile/brianrodrigues./viz/TT14-CallMeMaybe/Dashboard)
+
 ## Author
 
 **Brian Rodrigues**
 
-Junior Data Analyst | Python • SQL • Statistics • Business Analytics
+Data Analyst | Python • SQL • Statistics • Business Analytics
 
 * LinkedIn: https://linkedin.com/in/rodriguesbrian
 * GitHub: https://github.com/rodriguesbrian
-
